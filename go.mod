@@ -1,6 +1,6 @@
 module lwnra-devo-api
 
-go 1.24.5
+go 1.21
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.30

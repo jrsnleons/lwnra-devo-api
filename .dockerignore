@@ -1,0 +1,13 @@
+.git
+.gitignore
+README.md
+docs/
+*.md
+.air.toml
+Makefile
+.env
+.DS_Store
+*.log
+bin/
+test-build
+devotionals.db

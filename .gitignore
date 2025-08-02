@@ -1,0 +1,11 @@
+echo "bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+.env
+.DS_Store
+" > .gitignore

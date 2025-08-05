@@ -12,9 +12,15 @@ type Config struct {
 
 // Load loads configuration from environment variables
 func Load() *Config {
+	// Use /app/data for database in production environments
+	defaultDBPath := "devotionals.db"
+	if getEnv("ENVIRONMENT", "development") == "production" {
+		defaultDBPath = "/app/data/devotionals.db"
+	}
+
 	return &Config{
 		Port:          getEnv("PORT", "8082"),
-		DatabasePath:  getEnv("DB_PATH", "devotionals.db"),
+		DatabasePath:  getEnv("DB_PATH", defaultDBPath),
 		FacebookToken: getEnv("FB_ACCESS_TOKEN", ""),
 		Environment:   getEnv("ENVIRONMENT", "development"),
 	}

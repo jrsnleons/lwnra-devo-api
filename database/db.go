@@ -2,6 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"lwnra-devo-api/models"
@@ -16,14 +19,34 @@ type DB struct {
 
 // New creates a new database connection and initializes the schema
 func New(dbPath string) (*DB, error) {
+	// Ensure the directory exists for the database file
+	dir := filepath.Dir(dbPath)
+	if dir != "." && dir != "" {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create database directory: %v", err)
+		}
+	}
+
+	// Add file: prefix for sqlite to handle file creation properly
+	if !strings.HasPrefix(dbPath, "file:") {
+		dbPath = "file:" + dbPath + "?cache=shared&mode=rwc"
+	}
+
 	conn, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %v", err)
+	}
+
+	// Test the connection
+	if err := conn.Ping(); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	db := &DB{conn: conn}
 	if err := db.createTables(); err != nil {
-		return nil, err
+		conn.Close()
+		return nil, fmt.Errorf("failed to create tables: %v", err)
 	}
 
 	return db, nil

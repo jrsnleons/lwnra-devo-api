@@ -34,6 +34,10 @@ ENV TZ=Asia/Manila
 # Create app directory
 WORKDIR /app
 
+# Create data directory for database with proper permissions
+RUN mkdir -p /app/data && \
+    chown -R appuser:appuser /app
+
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 

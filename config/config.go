@@ -13,7 +13,7 @@ type Config struct {
 // Load loads configuration from environment variables
 func Load() *Config {
 	return &Config{
-		Port:          getEnv("PORT", "8080"),
+		Port:          getEnv("PORT", "8082"),
 		DatabasePath:  getEnv("DB_PATH", "devotionals.db"),
 		FacebookToken: getEnv("FB_ACCESS_TOKEN", ""),
 		Environment:   getEnv("ENVIRONMENT", "development"),

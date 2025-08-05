@@ -17,33 +17,16 @@ func ParseDevotional(msg string) models.Devotional {
 	devo.Date = normalizeDate(findBraceThatLooksLikeDate(lines))
 	devo.Version = findBibleVersion(lines, devo.Reading)
 	devo.Passage = grabPassageAfterVersion(lines, devo.Reading, devo.Version)
-	devo.ReflectionQs = getLinesBetween(lines, "REFLECTION QUESTIONS", "")
-	devo.Title = findFirstBracketSection(lines, "WHEN", "WATCHING") // crude, works w/ "WHEN NO ONE IS WATCHING"
-	if devo.Title == "" {
-		devo.Title = findCapsSectionAfter(lines, "REFLECTION QUESTIONS")
-	}
-	devo.Author = findAfterTitle(lines, devo.Title)
-	devo.Body = grabSection(lines, devo.Author, "PRAYER")
-	devo.Prayer = grabPrayerSection(lines) // Use dedicated function for prayer
+	devo.ReflectionQs = getReflectionQuestions(lines)
+	devo.Title = findActualTitle(lines)
+	devo.Author = findAuthorAfterTitle(lines, devo.Title)
+	devo.Body = grabDevotionalBody(lines, devo.Title, devo.Author)
+	devo.Prayer = grabPrayerSection(lines)
 
 	// Clean up
 	devo.Passage = strings.Trim(devo.Passage, "{} \n")
 	devo.Body = strings.Trim(devo.Body, "{} \n")
 	devo.Prayer = strings.Trim(devo.Prayer, "{} \n")
-
-	// Reflection questions: only keep up to, but not including, lines starting with '{' or 'WHEN'
-	if len(devo.ReflectionQs) > 0 {
-		var qs []string
-		for _, l := range devo.ReflectionQs {
-			if strings.HasPrefix(l, "{") || strings.HasPrefix(l, "WHEN ") {
-				break
-			}
-			if l != "" {
-				qs = append(qs, strings.Trim(l, "{} "))
-			}
-		}
-		devo.ReflectionQs = qs
-	}
 
 	return devo
 }
@@ -389,5 +372,132 @@ func grabPassageAfterVersion(lines []string, reading string, version string) str
 		}
 	}
 
+	return ""
+}
+
+// getReflectionQuestions properly extracts reflection questions without mixing in title
+func getReflectionQuestions(lines []string) []string {
+	var questions []string
+	inQuestions := false
+	
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		
+		// Start capturing after "REFLECTION QUESTIONS"
+		if strings.Contains(strings.ToUpper(trimmed), "REFLECTION QUESTIONS") {
+			inQuestions = true
+			continue
+		}
+		
+		// Stop when we hit the title section (all caps line after questions)
+		if inQuestions && isLikelyTitle(trimmed) {
+			break
+		}
+		
+		// Add non-empty lines while in questions section
+		if inQuestions && trimmed != "" {
+			questions = append(questions, trimmed)
+		}
+	}
+	
+	return questions
+}
+
+// findActualTitle finds the actual devotional title (usually after reflection questions)
+func findActualTitle(lines []string) string {
+	foundQuestions := false
+	
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		
+		// Track when we've passed reflection questions
+		if strings.Contains(strings.ToUpper(trimmed), "REFLECTION QUESTIONS") {
+			foundQuestions = true
+			continue
+		}
+		
+		// After reflection questions, look for all-caps title
+		if foundQuestions && isLikelyTitle(trimmed) {
+			return strings.Trim(trimmed, "{} ")
+		}
+	}
+	
+	// Fallback: look for any likely title
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if isLikelyTitle(trimmed) && !strings.Contains(trimmed, "DAILY DEVOTIONAL") && !strings.Contains(trimmed, "REFLECTION") {
+			return strings.Trim(trimmed, "{} ")
+		}
+	}
+	
+	return ""
+}
+
+// findAuthorAfterTitle finds the author line immediately after the title
+func findAuthorAfterTitle(lines []string, title string) string {
+	if title == "" {
+		return ""
+	}
+	
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		// Find the title line
+		if strings.Contains(trimmed, title) {
+			// Check the next line for author
+			if i+1 < len(lines) {
+				nextLine := strings.TrimSpace(lines[i+1])
+				if nextLine != "" && !isLikelyTitle(nextLine) && !strings.Contains(strings.ToUpper(nextLine), "PRAYER") {
+					return strings.Trim(nextLine, "{} ")
+				}
+			}
+		}
+	}
+	
+	return ""
+}
+
+// grabDevotionalBody extracts the main devotional text between author and prayer
+func grabDevotionalBody(lines []string, title, author string) string {
+	startIdx := -1
+	endIdx := len(lines)
+	
+	// Find where to start (after author line)
+	if author != "" {
+		for i, line := range lines {
+			if strings.Contains(strings.TrimSpace(line), author) {
+				startIdx = i + 1
+				break
+			}
+		}
+	} else if title != "" {
+		// If no author, start after title
+		for i, line := range lines {
+			if strings.Contains(strings.TrimSpace(line), title) {
+				startIdx = i + 1
+				break
+			}
+		}
+	}
+	
+	// Find where to end (before PRAYER)
+	for i := startIdx; i < len(lines); i++ {
+		if strings.Contains(strings.ToUpper(lines[i]), "PRAYER") {
+			endIdx = i
+			break
+		}
+	}
+	
+	if startIdx >= 0 && startIdx < endIdx {
+		bodyLines := lines[startIdx:endIdx]
+		// Remove empty lines at start and end
+		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[0]) == "" {
+			bodyLines = bodyLines[1:]
+		}
+		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[len(bodyLines)-1]) == "" {
+			bodyLines = bodyLines[:len(bodyLines)-1]
+		}
+		return strings.TrimSpace(strings.Join(bodyLines, "\n"))
+	}
+	
 	return ""
 }

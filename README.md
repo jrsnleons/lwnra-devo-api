@@ -12,13 +12,13 @@ go mod tidy
 
 # Set environment variables
 export FB_ACCESS_TOKEN="your_facebook_token"
-export PORT=8080
+export PORT=8082
 
 # Run the API server
 make run
 ```
 
-The API will be available at `http://localhost:8080`
+The API will be available at `http://localhost:8082`
 
 ## 📚 API Endpoints
 

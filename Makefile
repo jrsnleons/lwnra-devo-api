@@ -58,7 +58,7 @@ install-deps:
 # Start server with environment variables
 start: build
 	@echo "Starting server with environment variables..."
-	@PORT=8080 DB_PATH=devotionals.db ENVIRONMENT=development ./bin/$(APP_NAME)
+	@PORT=8082 DB_PATH=devotionals.db ENVIRONMENT=development ./bin/$(APP_NAME)
 
 # Help
 help:

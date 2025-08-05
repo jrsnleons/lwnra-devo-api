@@ -1,13 +1,40 @@
+# Version control
 .git
 .gitignore
+
+# Documentation
 README.md
+readme.MD
 docs/
 *.md
+
+# Development files
 .air.toml
 Makefile
 .env
 .DS_Store
 *.log
 bin/
+tmp/
 test-build
+
+# Database files (use fresh DB in production)
 devotionals.db
+*.db
+
+# Test files
+test_parser.go
+test_parser.go.bak
+*_test.go
+
+# IDE files
+.vscode/
+.idea/
+
+# Node modules (if any)
+node_modules/
+
+# Build artifacts
+*.tar
+lwnra-devo-api
+lwnra-devo-api.tar

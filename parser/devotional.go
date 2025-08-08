@@ -343,7 +343,8 @@ func findBibleVersion(lines []string, reading string) string {
 // grabPassageAfterVersion extracts the passage text that comes after the version line
 func grabPassageAfterVersion(lines []string, reading string, version string) string {
 	if reading == "" {
-		return ""
+		// If no reading found, try to find Bible reference pattern and get verses after it
+		return grabPassageFromDirectReference(lines)
 	}
 
 	startIdx := -1
@@ -351,12 +352,23 @@ func grabPassageAfterVersion(lines []string, reading string, version string) str
 		l = strings.TrimSpace(l)
 		// Look for the line that contains the reading and version
 		if strings.Contains(l, reading) && (version == "" || strings.Contains(l, version)) {
-			startIdx = i + 1 // Start from the line after the version line
+			// Look for the first line after this that starts with a verse number
+			for j := i + 1; j < len(lines); j++ {
+				nextLine := strings.TrimSpace(lines[j])
+				if nextLine == "" {
+					continue
+				}
+				// Check if this looks like a verse (starts with number)
+				if isVerseStart(nextLine) {
+					startIdx = j
+					break
+				}
+			}
 			break
 		}
 	}
 
-	// If we found the version line, extract everything until "REFLECTION QUESTIONS"
+	// If we found the start of verses, extract until "REFLECTION QUESTIONS"
 	if startIdx >= 0 && startIdx < len(lines) {
 		endIdx := len(lines)
 		// Look for "REFLECTION QUESTIONS" to know where to stop
@@ -373,6 +385,44 @@ func grabPassageAfterVersion(lines []string, reading string, version string) str
 	}
 
 	return ""
+}
+
+// grabPassageFromDirectReference handles passages when there's a direct Bible reference
+func grabPassageFromDirectReference(lines []string) string {
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		// Look for Bible reference pattern (e.g., "Revelation 7:9-12 NIV")
+		re := regexp.MustCompile(`^([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(\d+:\d+(?:-\d+)?)\s*([A-Z]{2,4})?`)
+		if re.MatchString(trimmed) {
+			// Found the reference line, look for verses after it
+			for j := i + 1; j < len(lines); j++ {
+				nextLine := strings.TrimSpace(lines[j])
+				if nextLine == "" {
+					continue
+				}
+				// Check if this looks like a verse (starts with number)
+				if isVerseStart(nextLine) {
+					// Find the end (before REFLECTION QUESTIONS)
+					endIdx := len(lines)
+					for k := j; k < len(lines); k++ {
+						if strings.Contains(strings.ToUpper(lines[k]), "REFLECTION QUESTIONS") {
+							endIdx = k
+							break
+						}
+					}
+					return strings.TrimSpace(strings.Join(lines[j:endIdx], "\n"))
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// isVerseStart checks if a line starts with a verse number
+func isVerseStart(line string) bool {
+	// Match patterns like "9 After this...", "10 And they...", etc.
+	re := regexp.MustCompile(`^\d+\s+`)
+	return re.MatchString(line)
 }
 
 // getReflectionQuestions properly extracts reflection questions without mixing in title

@@ -510,6 +510,12 @@ func findAuthorAfterTitle(lines []string, title string) string {
 func grabDevotionalBody(lines []string, title, author string) string {
 	startIdx := -1
 	endIdx := len(lines)
+	// DEBUG: Print lines for inspection
+	// fmt.Println("DEBUG: lines:")
+	// for i, l := range lines {
+	// 	fmt.Printf("%d: %q\n", i, l)
+	// }
+
 
 	// Find where to start (after author line)
 	if author != "" {
@@ -531,7 +537,7 @@ func grabDevotionalBody(lines []string, title, author string) string {
 
 	// Find where to end (before PRAYER)
 	for i := startIdx; i < len(lines); i++ {
-		if strings.Contains(strings.ToUpper(lines[i]), "PRAYER") {
+		if strings.HasPrefix(strings.ToUpper(strings.TrimSpace(lines[i])), "PRAYER") {
 			endIdx = i
 			break
 		}
@@ -539,6 +545,14 @@ func grabDevotionalBody(lines []string, title, author string) string {
 
 	if startIdx >= 0 && startIdx < endIdx {
 		// Join all lines between startIdx and endIdx, preserving blank lines and paragraphs
+	// DEBUG: Print startIdx, endIdx, and body lines
+	// fmt.Printf("DEBUG: startIdx=%d, endIdx=%d\n", startIdx, endIdx)
+	// if startIdx >= 0 && startIdx < endIdx {
+	// 	bodyLines := lines[startIdx:endIdx]
+	// 	for i, l := range bodyLines {
+	// 		fmt.Printf("body[%d]: %q\n", i, l)
+	// 	}
+	// }
 		bodyLines := lines[startIdx:endIdx]
 		// Remove leading/trailing blank lines only
 		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[0]) == "" {

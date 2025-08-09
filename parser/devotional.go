@@ -510,7 +510,7 @@ func findAuthorAfterTitle(lines []string, title string) string {
 func grabDevotionalBody(lines []string, title, author string) string {
 	startIdx := -1
 	endIdx := len(lines)
-	
+
 	// Find where to start (after author line)
 	if author != "" {
 		for i, line := range lines {
@@ -528,7 +528,7 @@ func grabDevotionalBody(lines []string, title, author string) string {
 			}
 		}
 	}
-	
+
 	// Find where to end (before PRAYER)
 	for i := startIdx; i < len(lines); i++ {
 		if strings.Contains(strings.ToUpper(lines[i]), "PRAYER") {
@@ -536,18 +536,19 @@ func grabDevotionalBody(lines []string, title, author string) string {
 			break
 		}
 	}
-	
+
 	if startIdx >= 0 && startIdx < endIdx {
+		// Always include all lines between startIdx and endIdx, including blank lines
 		bodyLines := lines[startIdx:endIdx]
-		// Remove empty lines at start and end
+		// Remove empty lines only at the start and end
 		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[0]) == "" {
 			bodyLines = bodyLines[1:]
 		}
 		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[len(bodyLines)-1]) == "" {
 			bodyLines = bodyLines[:len(bodyLines)-1]
 		}
-		return strings.TrimSpace(strings.Join(bodyLines, "\n"))
+		return strings.Join(bodyLines, "\n")
 	}
-	
+
 	return ""
 }

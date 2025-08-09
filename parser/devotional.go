@@ -538,9 +538,9 @@ func grabDevotionalBody(lines []string, title, author string) string {
 	}
 
 	if startIdx >= 0 && startIdx < endIdx {
-		// Always include all lines between startIdx and endIdx, including blank lines
+		// Join all lines between startIdx and endIdx, preserving blank lines and paragraphs
 		bodyLines := lines[startIdx:endIdx]
-		// Remove empty lines only at the start and end
+		// Remove leading/trailing blank lines only
 		for len(bodyLines) > 0 && strings.TrimSpace(bodyLines[0]) == "" {
 			bodyLines = bodyLines[1:]
 		}
